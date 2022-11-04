@@ -78,7 +78,7 @@ When loading a specific configuration, users has to append a version dependent s
 
 ```python
 from datasets import load_dataset
-load_dataset("shunk031/cocostuff", "stuff-things")
+load_dataset("shunk031/cocostuff", "stuff-thing")
 ```
 
 #### stuff-things
