@@ -71,8 +71,20 @@ def _load_labels(labels_path: str) -> Dict[int, str]:
     logger.info(f"Load labels from {labels_path}")
     with open(labels_path, "r") as rf:
         for line in rf:
-            label_id, label_name = line.strip().split(": ")
-            label_id_to_label_name[int(label_id)] = label_name
+            label_id_str, label_name = line.strip().split(": ")
+            label_id = int(label_id_str)
+
+            # correspondence between .png annotation & category_id · Issue #17 · nightrome/cocostuff https://github.com/nightrome/cocostuff/issues/17
+            # Label matching, 182 or 183 labels? · Issue #8 · nightrome/cocostuff https://github.com/nightrome/cocostuff/issues/8
+            if label_id == 0:
+                # for unlabeled class
+                assert label_name == "unlabeled", label_name
+                label_id_to_label_name[183] = label_name
+            else:
+                label_id_to_label_name[label_id] = label_name
+
+    assert len(label_id_to_label_name) == 183
+
     return label_id_to_label_name
 
 
@@ -244,12 +256,8 @@ class CocoStuffDataset(ds.GeneratorBasedBuilder):
             img_anns = image_id_to_stuff_annotations[image_id]
             bboxes = [list(map(int, ann["bbox"])) for ann in img_anns]
             category_ids = [ann["category_id"] for ann in img_anns]
-            category_labels = list(
-                map(
-                    lambda cat_id: id_to_label.get(cat_id, f"unknown-{cat_id}"),
-                    category_ids,
-                )
-            )
+            category_labels = list(map(lambda cid: id_to_label[cid], category_ids))
+
             assert len(bboxes) == len(category_ids) == len(category_labels)
             zip_it = zip(bboxes, category_ids, category_labels)
             objects_example = [
@@ -313,12 +321,8 @@ class CocoStuffDataset(ds.GeneratorBasedBuilder):
             img_anns = image_id_to_stuff_annotations[image_id]
             bboxes = [list(map(int, ann["bbox"])) for ann in img_anns]
             category_ids = [ann["category_id"] for ann in img_anns]
-            category_labels = list(
-                map(
-                    lambda cat_id: id_to_label.get(cat_id, f"unknown-{cat_id}"),
-                    category_ids,
-                )
-            )
+            category_labels = list(map(lambda cid: id_to_label[cid], category_ids))
+
             assert len(bboxes) == len(category_ids) == len(category_labels)
             zip_it = zip(bboxes, category_ids, category_labels)
             objects_example = [
